@@ -1,10 +1,9 @@
 import React from "react";
 import Spreadsheet from "./Spreadsheet";
-import Spread from"./Spread";
-import Sp from"./sp"
+
 
 const App = () => {
-  return <Sp />;
+  return <Spreadsheet />;
 };
 
 export default App;
