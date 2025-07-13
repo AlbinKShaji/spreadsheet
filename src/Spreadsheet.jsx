@@ -1,7 +1,5 @@
-
 import React, { useState, useRef, useEffect } from "react";
 
-// 1. Update initialColumns to match Figma UI
 const initialColumns = [
   "Job Request",
   "Submitted",
@@ -14,7 +12,7 @@ const initialColumns = [
   "Est. Value"
 ];
 
-// 2. Add helpers for tag colors and number formatting
+
 const statusColors = {
   "In-process": "#fde68a",
   "Need to start": "#bae6fd",
@@ -31,7 +29,7 @@ function formatNumber(val) {
   return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// 3. Update default rows to match Figma sample data
+
 const defaultRows = [
   [
     "Launch social media campaign for product", "15-11-2024", "In-process", "Aisha Patel", "www.aishapatel.com", "Sophie Choudhury", "Medium", "20-11-2024", "6200000"
@@ -66,22 +64,22 @@ const Spreadsheet = () => {
   const [shareLink, setShareLink] = useState("");
   const [showNewActionScreen, setShowNewActionScreen] = useState(false);
 
-  // ➕ Add Column
+  
   const handleAddColumn = () => {
     const newCol = `Item ${columns.length + 1}`;
     setColumns([...columns, newCol]);
-    // Add empty cell to each row
+
     const updatedRows = rows.map(row => [...row, ""]);
     setRows(updatedRows);
   };
 
-  // 📥 Select Cell
+  
   const handleCellClick = (rowIdx, colIdx) => {
     setSelectedCell({ row: rowIdx, col: colIdx });
     setCellValue(rows[rowIdx][colIdx]);
   };
 
-  // ✅ Commit Edit
+ 
   const commitValue = () => {
     const { row, col } = selectedCell;
     if (row !== null && col !== null) {
@@ -89,7 +87,6 @@ const Spreadsheet = () => {
       updatedRows[row][col] = cellValue;
       setRows(updatedRows);
       setSelectedCell({ row: null, col: null });
-      // Automatically add a new row if this was the last row
       if (row === rows.length - 1) {
         setRows([...updatedRows, Array(columns.length).fill("")]);
       }
@@ -128,7 +125,7 @@ const Spreadsheet = () => {
     }
   };
 
-  // Export to CSV
+ 
   const handleExport = () => {
     const csvRows = [columns.filter((_, idx) => !hiddenCols.includes(idx)).join(",")];
     filteredRows.forEach(row => {
@@ -144,7 +141,7 @@ const Spreadsheet = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Import from CSV
+
   const fileInputRef = useRef(null);
   const handleImportClick = () => fileInputRef.current.click();
   const handleImport = (e) => {
@@ -169,12 +166,12 @@ const Spreadsheet = () => {
     reader.readAsText(file);
   };
 
-  // Unhide Column
+  
   const handleUnhideColumn = (colIdx) => {
     setHiddenCols(hiddenCols.filter(idx => idx !== colIdx));
   };
 
-  // Share functionality: encode columns and rows in URL hash and show modal
+ 
   const handleShare = () => {
     const payload = {
       columns,
@@ -191,7 +188,7 @@ const Spreadsheet = () => {
     setTimeout(() => setSnackbar(""), 2000);
   };
 
-  // On load, decode hash if present
+  
   useEffect(() => {
     if (window.location.hash.length > 1) {
       try {
@@ -204,10 +201,20 @@ const Spreadsheet = () => {
           setFilteredRows(r);
         }
       } catch (e) {
-        // ignore invalid hash
+       console.log(e);
       }
     }
   }, []);
+
+  const handleClearSpreadsheet = () => {
+    const emptyRows = Array.from({ length: 50 }, () => Array(columns.length).fill(""));
+    setRows(emptyRows);
+    setFilteredRows(emptyRows);
+    setHiddenCols([]);
+    setSelectedCell({ row: null, col: null });
+    setSnackbar("Spreadsheet cleared!");
+    setShowNewActionScreen(false);
+  };
 
   return (
     <>
@@ -332,6 +339,9 @@ const Spreadsheet = () => {
   white-space: nowrap;
   z-index: 10;
 }
+  .button-color{
+  color:"green"
+  }
 
 .snackbar {
   position: fixed;
@@ -355,6 +365,7 @@ const Spreadsheet = () => {
   .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
   .toolbar-left, .toolbar-right { flex-wrap: wrap; }
 }
+  
       `}</style>
       {snackbar && <div className="snackbar">{snackbar}</div>}
       {showShareModal && (
@@ -457,51 +468,64 @@ const Spreadsheet = () => {
         </div>
       )}
       <div className="spreadsheet-container">
-        <div className="toolbar">
-          <div className="toolbar-left">
-            <select onChange={(e) => handleSort(e.target.value)} title="Sort rows by column">
-              <option value="">Sort by</option>
-              {columns.map((col, idx) => (
-                <option key={idx} value={idx}>{col}</option>
-              ))}
-            </select>
-            <select onChange={(e) => handleFilter(e.target.value)} title="Filter Item 1">
-              <option value="">Filter (Item 1 contains)</option>
-              <option value="a">a</option>
-              <option value="b">b</option>
-              <option value="c">c</option>
-            </select>
-            <button onClick={() => setViewMode(viewMode === "compact" ? "normal" : "compact")}
-              title="Toggle compact/normal view">
-              Toggle View
-            </button>
-            <select onChange={(e) => handleHideColumn(parseInt(e.target.value))} title="Hide a column">
-              <option value="">Hide Column</option>
-              {columns.map((col, idx) =>
-                !hiddenCols.includes(idx) && <option key={idx} value={idx}>{col}</option>
-              )}
-            </select>
-            <select onChange={e => handleUnhideColumn(parseInt(e.target.value))} title="Unhide a column">
-              <option value="">Unhide Column</option>
-              {hiddenCols.map(idx => (
-                <option key={idx} value={idx}>{columns[idx]}</option>
-              ))}
-            </select>
-          </div>
-          <div className="toolbar-right">
-            <input
-              type="file"
-              accept=".csv"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleImport}
-            />
-            <button onClick={handleImportClick} title="Import CSV">Import</button>
-            <button onClick={handleExport} title="Export as CSV">Export</button>
-            <button onClick={handleShare} title="Copy shareable link">Share</button>
-            <button title="Custom action" onClick={() => setShowNewActionScreen(true)}>New Action</button>
-          </div>
-        </div>
+    
+<div className="toolbar">
+  <div className="toolbar-left">
+    <select onChange={(e) => handleSort(e.target.value)} title="Sort rows by column">
+      <option value="">Tool Bar</option>
+      {columns.map((col, idx) => (
+        <option key={idx} value={idx}>{col}</option>
+      ))}
+    </select>
+    <select onChange={(e) => handleFilter(e.target.value)} title="Filter Item 1">
+      <option value="">Filter (Item 1 contains)</option>
+      <option value="a">a</option>
+      <option value="b">b</option>
+      <option value="c">c</option>
+    </select>
+    <button onClick={() => setViewMode(viewMode === "compact" ? "normal" : "compact")}
+      title="Toggle compact/normal view">
+      Cell View
+    </button>
+    <select onChange={(e) => handleHideColumn(parseInt(e.target.value))} title="Hide a column">
+      <option value="">Hide Field</option>
+      {columns.map((col, idx) =>
+        !hiddenCols.includes(idx) && <option key={idx} value={idx}>{col}</option>
+      )}
+    </select>
+    <select onChange={e => handleUnhideColumn(parseInt(e.target.value))} title="Unhide a column">
+      <option value="">Unhide Field</option>
+      {hiddenCols.map(idx => (
+        <option key={idx} value={idx}>{columns[idx]}</option>
+      ))}
+    </select>
+  </div>
+  <div className="toolbar-right">
+    <input
+      type="file"
+      accept=".csv"
+      ref={fileInputRef}
+      style={{ display: "none" }}
+      onChange={handleImport}
+    />
+    <button onClick={handleImportClick} title="Import CSV">Import</button>
+    <button onClick={handleExport} title="Export as CSV">Export</button>
+    <button onClick={handleShare} title="Copy shareable link">Share</button>
+    <button
+      onClick={() => {
+        setFilteredRows(rows);
+        setSnackbar("Filters and sorting reset!");
+        setTimeout(() => setSnackbar(""), 2000);
+      }}
+      title="Reset all filters and sorting"
+      style={{ marginRight: "8px" }}
+    >
+      Reset Filters
+    </button>
+    <button style={{backgroundColor:"green"}} className="button-color" title="Custom action" onClick={handleClearSpreadsheet} >New Action</button>
+  </div>
+</div>
+
 
         <table>
           <thead>
